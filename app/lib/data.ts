@@ -7,9 +7,11 @@ import {
   LatestInvoiceRaw,
   User,
   Revenue,
+  TestCustomer,
 } from './definitions';
 import { formatCurrency } from './utils';
 import { unstable_noStore as noStore } from 'next/cache';
+import { client } from '@/app/lib/redis-db';
 
 export async function fetchRevenue() {
   // Add noStore() here to prevent the response from being cached.
@@ -230,5 +232,43 @@ export async function getUser(email: string) {
   } catch (error) {
     console.error('Failed to fetch user:', error);
     throw new Error('Failed to fetch user.');
+  }
+}
+
+export async function getCustomers() {
+  noStore();
+  try {
+    const value = await client.json.get('customers');
+    const customersJson = JSON.parse(JSON.stringify(value));
+    const customers: TestCustomer[] = new Array();
+
+    for (var customer in customersJson) {
+      const currentCustomer: TestCustomer = { id: '', name: '', contact: '' };
+      if (customersJson.hasOwnProperty(customer)) {
+        currentCustomer.id = customersJson[customer].id;
+        currentCustomer.name = customersJson[customer].name;
+        currentCustomer.contact = customersJson[customer].contact;
+        customers.push(currentCustomer);
+      }
+    }
+
+    return customers;
+  } catch (error) {
+    console.error('Failed to fetch customers', error);
+    throw new Error('Failed to fetch customers');
+  }
+}
+
+export async function fetchCustomerById(id: string) {
+  noStore();
+  try {
+    const value = await client.json.get('customers', { path: `$.${id}` });
+    const json = JSON.parse(JSON.stringify(value));
+    const customer: TestCustomer = json[0];
+
+    return customer;
+  } catch (error) {
+    console.error('Failed to fetch customer: ', error);
+    throw new Error('Failed to fetch customer.');
   }
 }

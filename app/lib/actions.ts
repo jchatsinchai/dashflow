@@ -135,3 +135,7 @@ export async function authenticate(
     throw error;
   }
 }
+
+export async function addCustomer(prevState: State, formData: FormData) {}
+
+export async function deleteCustomer(name: string) {}
